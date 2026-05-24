@@ -252,9 +252,32 @@ async function onSaved(result) {
 
 // --- ДЕЙСТВИЯ ---
 
-function confirmDelete(id) {
+async function confirmDelete(id) {
   tariffToDelete.value = id;
-  showConfirmDelete.value = true;
+  const activeCount = tariffCounts.value[id] ?? 0;
+
+  if (activeCount > 0) {
+    // Двухшаговое предупреждение через SweetAlert2
+    const result = await Swal.fire({
+      icon: 'warning',
+      title: 'Есть активные ученики',
+      html: `У этого тарифа <b>${activeCount}</b> активных ученик(а/ов).<br>
+             Их тарифные периоды продолжат действовать, но новым ученикам тариф будет недоступен.<br><br>
+             Всё равно архивировать?`,
+      showCancelButton: true,
+      confirmButtonText: 'Да, архивировать',
+      cancelButtonText: 'Отмена',
+      confirmButtonColor: '#dc2626',
+      background: '#111827',
+      color: '#fff',
+    });
+    if (result.isConfirmed) {
+      await proceedDelete();
+    }
+  } else {
+    // Обычное подтверждение без предупреждения
+    showConfirmDelete.value = true;
+  }
 }
 
 async function proceedDelete() {

@@ -194,16 +194,14 @@ def update_tariff(tariff_id: int, tariff_data: schemas.TariffCreate, db: Session
 
 @app.delete("/tariff/{tariff_id}")
 def delete_tariff(tariff_id: int, db: Session = Depends(get_db)):
-    """Удалить тариф"""
+    """Архивировать тариф. Если есть активные ученики — архивирование всё равно разрешено,
+    но фронт должен предупредить пользователя заранее."""
     if not crud.get_tariff(db=db, tariff_id=tariff_id):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Тариф с id {tariff_id} не найден")
-    try:
-        return crud.delete_tariff(db=db, tariff_id=tariff_id)
-    except IntegrityError:
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Нельзя удалить тариф: он используется в тарифных периодах учеников"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Тариф с id {tariff_id} не найден"
         )
+    return crud.delete_tariff(db=db, tariff_id=tariff_id)
 
 # ===== payments =====
 @app.post("/payments/", response_model=schemas.PaymentsRead)
